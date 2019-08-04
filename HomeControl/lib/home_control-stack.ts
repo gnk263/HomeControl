@@ -14,7 +14,30 @@ export class HomeControlStack extends cdk.Stack {
 
     // IoT Things
     const raspberryPi = new iot.CfnThing(this, 'Raspberry Pi', {
-      thingName: 'HomeControl-RaspberryPi'
+      thingName: 'HomeControl-RaspberryPi',
+    });
+
+    // IoT Topic
+    const iotTopic = 'HomeControl/RaspberryPi';
+
+    // IoT Policy
+    const raspberryPiPolicy = new iot.CfnPolicy(this, 'raspberry Pi Poliry', {
+      policyName: 'HomeControl-RaspberryPi-Policy',
+      policyDocument: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Action: 'iot:Connect',
+            Resource: `arn:aws:iot:${this.region}:${this.account}:client/${raspberryPi.ref}`
+          },
+          {
+            Effect: 'Allow',
+            Action: 'iot:Subscribe',
+            Resource: `arn:aws:iot:${this.region}:${this.account}:topicfilter/${iotTopic}`
+          },
+        ]
+      },
     });
 
     // Role
@@ -35,6 +58,9 @@ export class HomeControlStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_10_X,
       timeout: Duration.seconds(3),
       role: apiRole,
+      environment: {
+        IOT_TOPIC: iotTopic,
+      },
     });
 
     // API Gateway
