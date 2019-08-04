@@ -1,9 +1,10 @@
 import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as iot from '@aws-cdk/aws-iot';
 import * as role from '@aws-cdk/aws-iam';
+import * as lambda from '@aws-cdk/aws-lambda';
 import { ServicePrincipal, ManagedPolicy } from '@aws-cdk/aws-iam';
+import { Duration } from '@aws-cdk/core';
 import cdk = require('@aws-cdk/core');
-import { PassthroughBehavior } from '@aws-cdk/aws-apigateway';
 
 export class HomeControlStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -18,41 +19,35 @@ export class HomeControlStack extends cdk.Stack {
 
     // Role
     const apiRole = new role.Role(this, 'ApiRole', {
-      roleName: 'HomeControl-ApiRole',
-      assumedBy: new ServicePrincipal('apigateway.amazonaws.com'),
+      roleName: 'HomeControl-LambdaRole',
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName('AWSIoTFullAccess'),
         ManagedPolicy.fromAwsManagedPolicyName('AWSIoTDataAccess'),
-        ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonAPIGatewayPushToCloudWatchLogs'),
+        ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
       ],
+    });
+
+    // Lambda
+    const iotLambda = new lambda.Function(this, 'IoTLambda', {
+      code: lambda.Code.asset('src/lambda/iot_publish'),
+      handler: 'app.handler',
+      runtime: lambda.Runtime.NODEJS_10_X,
+      timeout: Duration.seconds(3),
+      role: apiRole,
     });
 
     // API Gateway
     const api = new apigateway.RestApi(this, 'HomeControlApi', {
-      restApiName: 'HomeControlApi',
+      restApiName: 'HomeControlApi'
     });
 
-    const integration = new apigateway.AwsIntegration({
-      service: 'iotdata',
-      subdomain: process.env.IOT_ENDPOINT,
-      integrationHttpMethod: 'POST',
-      path: 'topics/HomeControl/raspberrypi',
-      options: {
-        credentialsRole: apiRole,
-        integrationResponses: [
-          {
-            statusCode: '200',
-          },
-        ],
-        passthroughBehavior: PassthroughBehavior.WHEN_NO_TEMPLATES,
-      },
+    const integration = new apigateway.LambdaIntegration(iotLambda, {
+      proxy: true,
     });
 
     const controlResource = api.root.addResource('control');
-    controlResource.addMethod('POST', integration, {
-      methodResponses: [
-        { statusCode: '200', }
-      ]
-    });
+    controlResource.addMethod('POST', integration);
   }
 }
 
