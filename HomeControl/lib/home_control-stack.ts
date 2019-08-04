@@ -35,9 +35,6 @@ export class HomeControlStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_10_X,
       timeout: Duration.seconds(3),
       role: apiRole,
-      environment: {
-        IOT_ENDPOINT: process.env.IOT_ENDPOINT
-      },
     });
 
     // API Gateway
