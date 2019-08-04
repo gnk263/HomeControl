@@ -30,7 +30,7 @@ export class HomeControlStack extends cdk.Stack {
 
     // Lambda
     const iotLambda = new lambda.Function(this, 'IoTLambda', {
-      code: lambda.Code.asset('src/lambda'),
+      code: lambda.Code.asset('src/lambda/iot_publish'),
       handler: 'app.handler',
       runtime: lambda.Runtime.NODEJS_10_X,
       timeout: Duration.seconds(3),
