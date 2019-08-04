@@ -17,7 +17,7 @@ export async function handler(event: any) {
     });
 
     await iotdata.publish({
-        topic: 'HomeControl/raspberrypi',
+        topic: process.env.IOT_TOPIC!,
         payload: JSON.stringify(requestParams),
     }).promise();
 
