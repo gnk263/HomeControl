@@ -19,11 +19,12 @@ export class HomeControlStack extends cdk.Stack {
 
     // Role
     const apiRole = new role.Role(this, 'ApiRole', {
-      roleName: 'HomeControl-ApiRole',
-      assumedBy: new ServicePrincipal('apigateway.amazonaws.com'),
+      roleName: 'HomeControl-LambdaRole',
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName('AWSIoTFullAccess'),
         ManagedPolicy.fromAwsManagedPolicyName('AWSIoTDataAccess'),
-        ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonAPIGatewayPushToCloudWatchLogs'),
+        ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
       ],
     });
 
@@ -33,6 +34,10 @@ export class HomeControlStack extends cdk.Stack {
       handler: 'app.handler',
       runtime: lambda.Runtime.NODEJS_10_X,
       timeout: Duration.seconds(3),
+      role: apiRole,
+      environment: {
+        IOT_ENDPOINT: process.env.IOT_ENDPOINT
+      },
     });
 
     // API Gateway
