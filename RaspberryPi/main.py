@@ -8,7 +8,7 @@ from logging import getLogger, Formatter, FileHandler
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
 # Use PIN 7 (GPIO 4)
-GPIO_AIRCON_ON = 7
+PIN_AIRCON_ON = 7
 
 # programme finish trigger file
 FINISH_FILE = 'finish.txt'
@@ -60,7 +60,7 @@ def main():
 
 def init_gpio():
     GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(GPIO_AIRCON_ON, GPIO.OUT, initial=GPIO.HIGH)
+    GPIO.setup(PIN_AIRCON_ON, GPIO.OUT, initial=GPIO.HIGH)
 
 
 def parse_config_file():
@@ -93,8 +93,8 @@ def control(params):
         return
 
     if is_aircon_on(params):
-        logger.info('Execute GPIO_AIRCON_ON')
-        execute(GPIO_AIRCON_ON)
+        logger.info('Execute PIN_AIRCON_ON')
+        execute(PIN_AIRCON_ON)
 
 
 def execute(pin_no):
